@@ -1,0 +1,297 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="代码解释" Width="492" Opacity="0"
+        WindowStyle="None" ResizeMode="NoResize" Background="#FFFFFF"
+        ShowInTaskbar="False" ShowActivated="False" Topmost="True" WindowStartupLocation="Manual"
+        FontFamily="Segoe UI, Microsoft YaHei UI" UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display">
+    <Window.Resources>
+        <SolidColorBrush x:Key="PrimaryInk" Color="#1E222D" />
+        <SolidColorBrush x:Key="SubtleInk" Color="#565C6B" />
+        <SolidColorBrush x:Key="AlertInk" Color="#913D32" />
+        <SolidColorBrush x:Key="Accent" Color="#175FCC" />
+        <SolidColorBrush x:Key="SurfaceTint" Color="#F8F9FC" />
+        <SolidColorBrush x:Key="Divider" Color="#E7EBF2" />
+        <Style x:Key="AnswerText" TargetType="TextBox">
+            <Setter Property="IsReadOnly" Value="True" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="VerticalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource PrimaryInk}" />
+            <Setter Property="SelectionBrush" Value="#AECBFF" />
+            <Setter Property="FontSize" Value="14.5" />
+        </Style>
+        <Style x:Key="QuestionText" TargetType="TextBox" BasedOn="{StaticResource AnswerText}">
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Foreground" Value="#272930" />
+        </Style>
+        <Style x:Key="QuestionRow" TargetType="Border">
+            <Setter Property="Background" Value="#EEF1F7" />
+            <Setter Property="Padding" Value="14,9" />
+            <Setter Property="Margin" Value="18,15,0,11" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="MaxWidth" Value="370" />
+            <Setter Property="CornerRadius" Value="16" />
+        </Style>
+        <Style x:Key="SendButton" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource Accent}" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Surface" Background="{TemplateBinding Background}"
+                                BorderThickness="1" BorderBrush="Transparent" CornerRadius="13">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#1456BC" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#124899" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="#B8D6FF" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Surface" Property="Background" Value="#EBEDF1" />
+                                <Setter Property="Foreground" Value="#626675" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SourceButton" TargetType="ToggleButton">
+            <Setter Property="Foreground" Value="{StaticResource SubtleInk}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Pill" CornerRadius="12" Background="#EDF0F6"
+                                BorderThickness="1" BorderBrush="Transparent" Padding="9,0">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <ContentPresenter VerticalAlignment="Center" />
+                                <Path x:Name="Arrow" Data="M 0,0 L 3,3 L 6,0" StrokeThickness="1.2"
+                                      Stroke="{TemplateBinding Foreground}" StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round" VerticalAlignment="Center" Margin="6,1,0,0" />
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Pill" Property="Background" Value="#E4EAF4" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Pill" Property="Background" Value="#DBE5F5" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Pill" Property="Background" Value="#E5EFFE" />
+                                <Setter Property="Foreground" Value="{StaticResource Accent}" />
+                                <Setter TargetName="Arrow" Property="Data" Value="M 0,3 L 3,0 L 6,3" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Pill" Property="BorderBrush" Value="#618ECE" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="55" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid x:Name="Header">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Border Grid.ColumnSpan="3" Background="{StaticResource SurfaceTint}"
+                    BorderBrush="{StaticResource Divider}" BorderThickness="0,0,0,1" />
+            <Border x:Name="TitleBar" Background="Transparent" Cursor="SizeAll" Padding="18,0,0,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="30" Height="30" CornerRadius="9" Background="#E8EFFB">
+                        <Path Data="M 5,2 L 1,7 L 5,12 M 13,2 L 17,7 L 13,12 M 10.5,1 L 7.5,13"
+                              Stroke="#3C5E96" StrokeThickness="1.4" StrokeStartLineCap="Round"
+                              StrokeEndLineCap="Round" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="代码解释" FontSize="16" FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryInk}" VerticalAlignment="Center" Margin="10,0,0,0" />
+                </StackPanel>
+            </Border>
+            <Button x:Name="Dismiss" Grid.Column="2" Width="30" Height="30" Margin="8,0,13,0"
+                    AutomationProperties.Name="关闭" ToolTip="关闭 (Esc)" Background="#EDF0F6">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="HitArea" Background="{TemplateBinding Background}"
+                                BorderThickness="1" BorderBrush="Transparent" CornerRadius="15">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="HitArea" Property="Background" Value="#E0E2E8" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="HitArea" Property="Background" Value="#D6DAE2" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="HitArea" Property="BorderBrush" Value="#4777BF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+                <Path Data="M 0,0 L 9,9 M 9,0 L 0,9" Stroke="#444854"
+                      StrokeThickness="1.45" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+            </Button>
+            <ToggleButton x:Name="SourceToggle" Grid.Column="1" Height="29" Visibility="Collapsed"
+                          Content="原文" AutomationProperties.Name="原文" ToolTip="预览本次选中的代码"
+                          Style="{StaticResource SourceButton}" />
+        </Grid>
+
+        <ScrollViewer x:Name="TranscriptScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled" Padding="22,16,22,15">
+            <ScrollViewer.Resources>
+                <Style x:Key="ScrollPage" TargetType="RepeatButton">
+                    <Setter Property="Focusable" Value="False" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="RepeatButton">
+                                <Border Background="Transparent" />
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+                <Style TargetType="ScrollBar">
+                    <Setter Property="Width" Value="12" />
+                    <Setter Property="Margin" Value="0,8,2,8" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ScrollBar">
+                                <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton Command="ScrollBar.PageUpCommand"
+                                                      Style="{StaticResource ScrollPage}" />
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.Thumb>
+                                        <Thumb MinHeight="24">
+                                            <Thumb.Template>
+                                                <ControlTemplate TargetType="Thumb">
+                                                    <Grid Background="Transparent">
+                                                        <Border x:Name="Grip" Width="5" CornerRadius="2.5"
+                                                                Background="#B5B8C2" />
+                                                    </Grid>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Grip" Property="Background" Value="#858A98" />
+                                                        </Trigger>
+                                                        <Trigger Property="IsDragging" Value="True">
+                                                            <Setter TargetName="Grip" Property="Background" Value="#656A78" />
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Thumb.Template>
+                                        </Thumb>
+                                    </Track.Thumb>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton Command="ScrollBar.PageDownCommand"
+                                                      Style="{StaticResource ScrollPage}" />
+                                    </Track.IncreaseRepeatButton>
+                                </Track>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ScrollViewer.Resources>
+            <StackPanel x:Name="Transcript">
+                <Border x:Name="SourcePreview" Visibility="Collapsed" Background="#F4F6FA"
+                        CornerRadius="13" Padding="13,10" Margin="0,0,0,13">
+                    <StackPanel>
+                        <TextBox x:Name="SourceText" Style="{StaticResource AnswerText}" FontSize="12.5"
+                                 FontFamily="Consolas, Microsoft YaHei UI" MaxHeight="112" VerticalScrollBarVisibility="Auto"
+                                 AutomationProperties.Name="选区原文" />
+                        <TextBlock x:Name="PreviewLimit" Visibility="Collapsed" FontSize="11"
+                                   Foreground="{StaticResource SubtleInk}" Margin="0,6,0,0" />
+                    </StackPanel>
+                </Border>
+                <TextBlock x:Name="Notice" Text="正在读取选区…" FontSize="14" LineHeight="22"
+                           AutomationProperties.LiveSetting="Polite" Foreground="{StaticResource SubtleInk}" TextWrapping="Wrap" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border x:Name="Footer" Grid.Row="2" Background="{StaticResource SurfaceTint}" BorderBrush="{StaticResource Divider}"
+                BorderThickness="0,1,0,0" Padding="19,0">
+            <StackPanel>
+                <TextBlock x:Name="Feedback" Visibility="Collapsed" TextWrapping="Wrap"
+                           Foreground="{StaticResource AlertInk}" FontSize="12" Margin="2,10,2,0" />
+                <Grid x:Name="Composer" Visibility="Collapsed" Margin="0,11,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="64" />
+                    </Grid.ColumnDefinitions>
+                    <Grid Margin="0,0,8,0">
+                        <TextBox x:Name="Question" Height="40" Padding="13,0" MaxLength="500"
+                                 IsEnabled="False" FontSize="13" VerticalContentAlignment="Center"
+                                 Foreground="{StaticResource PrimaryInk}" CaretBrush="{StaticResource Accent}" SelectionBrush="#AECBFF"
+                                 AutomationProperties.Name="追问">
+                            <TextBox.Template>
+                                <ControlTemplate TargetType="TextBox">
+                                    <Border x:Name="Field" Background="#FFFFFF" BorderThickness="1"
+                                            BorderBrush="#D5DCE9" CornerRadius="14">
+                                        <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center"
+                                                      Margin="{TemplateBinding Padding}" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsKeyboardFocused" Value="True">
+                                            <Setter TargetName="Field" Property="BorderBrush" Value="#4777BF" />
+                                        </Trigger>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter TargetName="Field" Property="Background" Value="#F5F5F8" />
+                                            <Setter TargetName="Field" Property="BorderBrush" Value="#E0E1E7" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </TextBox.Template>
+                        </TextBox>
+                        <TextBlock Text="例如：这个参数有什么作用？" IsHitTestVisible="False"
+                                   VerticalAlignment="Center" Margin="14,0,8,0" FontSize="13"
+                                   Foreground="{StaticResource SubtleInk}" TextTrimming="CharacterEllipsis">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding Text, ElementName=Question}" Value="" />
+                                                <Condition Binding="{Binding IsEnabled, ElementName=Question}" Value="True" />
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                    <Button x:Name="Send" Grid.Column="1" Content="发送" IsEnabled="False"
+                            Style="{StaticResource SendButton}" />
+                </Grid>
+                <DockPanel Height="32" LastChildFill="True" Margin="2,0">
+                    <TextBlock x:Name="Status" DockPanel.Dock="Right" Foreground="{StaticResource SubtleInk}"
+                               FontSize="12" VerticalAlignment="Center" AutomationProperties.LiveSetting="Polite" />
+                    <TextBlock Text="Qwen3.5 9B · 本机" FontSize="12" Foreground="{StaticResource SubtleInk}" VerticalAlignment="Center" />
+                </DockPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
