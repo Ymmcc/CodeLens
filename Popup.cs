@@ -69,6 +69,9 @@ namespace LocalCodeLens
             transcript = (StackPanel)View.FindName("Transcript");
             notice = (TextBlock)View.FindName("Notice");
             status = (TextBlock)View.FindName("Status");
+            var modelLabel = (TextBlock)View.FindName("ModelLabel");
+            modelLabel.Text = Ollama.Model + " · 本机";
+            modelLabel.ToolTip = Ollama.Model;
             feedback = (TextBlock)View.FindName("Feedback");
             composer = (FrameworkElement)View.FindName("Composer");
             questionInput = (TextBox)View.FindName("Question");

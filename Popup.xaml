@@ -289,7 +289,8 @@
                 <DockPanel Height="32" LastChildFill="True" Margin="2,0">
                     <TextBlock x:Name="Status" DockPanel.Dock="Right" Foreground="{StaticResource SubtleInk}"
                                FontSize="12" VerticalAlignment="Center" AutomationProperties.LiveSetting="Polite" />
-                    <TextBlock Text="Qwen3.5 9B · 本机" FontSize="12" Foreground="{StaticResource SubtleInk}" VerticalAlignment="Center" />
+                    <TextBlock x:Name="ModelLabel" FontSize="12" Foreground="{StaticResource SubtleInk}"
+                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,10,0" />
                 </DockPanel>
             </StackPanel>
         </Border>

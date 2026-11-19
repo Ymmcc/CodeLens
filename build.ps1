@@ -1,6 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $framework = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319'
 $libraries = @(
+    'System.Configuration.dll'
     'System.Net.Http.dll'
     'System.Web.Extensions.dll'
     'System.Windows.Forms.dll'

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -14,11 +15,14 @@ namespace LocalCodeLens
 {
     internal static class Ollama
     {
-        internal const string Model = "qwen3.5:9b";
+        private const string DefaultModel = "qwen3.5:9b";
+        private const int DefaultPort = 11434;
+        internal static readonly string Model = ReadModel();
+        private static readonly string LocalEndpoint = "127.0.0.1:" + ReadPort();
         private static readonly HttpClient Client = new HttpClient(new HttpClientHandler {
             UseProxy = false, AllowAutoRedirect = false
         }) {
-            BaseAddress = new Uri("http://127.0.0.1:11434/"),
+            BaseAddress = new Uri("http://" + LocalEndpoint + "/"),
             Timeout = Timeout.InfiniteTimeSpan
         };
 
@@ -72,12 +76,19 @@ namespace LocalCodeLens
         internal static async Task<int> Reply(
             List<Message> messages, Action<string> status, Action<string> append, CancellationToken cancel)
         {
-            await EnsureRunning(status, cancel);
+            var models = await EnsureRunning(status, cancel);
+            var installed = Array.Find(models, item => item != null &&
+                string.Equals(item.Tag, Model, StringComparison.OrdinalIgnoreCase));
+            if (installed == null)
+                throw MissingModel();
+            if (!string.IsNullOrWhiteSpace(installed.remote_model) || !string.IsNullOrWhiteSpace(installed.remote_host))
+                throw new InvalidOperationException("当前配置指向云端模型。请在 CodeLens.exe.config 中选择本机模型。");
+
             bool followUp = messages.Count > 2;
             status(followUp ? "正在回答追问…" : "正在生成解释…");
             var json = new JavaScriptSerializer();
             var payload = new {
-                model = Model,
+                model = installed.Tag,
                 stream = true,
                 think = false,
                 keep_alive = "2m",
@@ -92,7 +103,7 @@ namespace LocalCodeLens
                 using (cancel.Register(response.Dispose))
                 {
                     if (response.StatusCode == HttpStatusCode.NotFound)
-                        throw new InvalidOperationException("Ollama 没有找到 qwen3.5:9b。请检查模型目录设置。");
+                        throw MissingModel();
                     if (!response.IsSuccessStatusCode)
                         throw new InvalidOperationException("Ollama 无法加载或运行模型。请检查服务和可用内存后重试。");
 
@@ -124,10 +135,32 @@ namespace LocalCodeLens
             }
         }
 
-        private static async Task EnsureRunning(Action<string> status, CancellationToken cancel)
+        private static string ReadModel()
         {
-            if (await IsReady(cancel))
-                return;
+            var value = (ConfigurationManager.AppSettings["OllamaModel"] ?? "").Trim();
+            if (value.Length == 0)
+                return DefaultModel;
+            return value.LastIndexOf(':') <= value.LastIndexOf('/') ? value + ":latest" : value;
+        }
+
+        private static int ReadPort()
+        {
+            int value;
+            return int.TryParse(ConfigurationManager.AppSettings["OllamaPort"], out value) &&
+                value >= 1 && value <= 65535 ? value : DefaultPort;
+        }
+
+        private static InvalidOperationException MissingModel()
+        {
+            return new InvalidOperationException("Ollama 没有找到模型 " + Model +
+                "。请用 ollama list 核对 CodeLens.exe.config 中的模型名。");
+        }
+
+        private static async Task<InstalledModel[]> EnsureRunning(Action<string> status, CancellationToken cancel)
+        {
+            var models = await ReadInstalledModels(cancel);
+            if (models != null)
+                return models;
             string path = FindExecutable();
             if (path == null)
                 throw new InvalidOperationException("找不到 Ollama。请启动已安装的 Ollama 后再试。");
@@ -137,7 +170,7 @@ namespace LocalCodeLens
             var start = new ProcessStartInfo(path, "serve") {
                 UseShellExecute = false, CreateNoWindow = true
             };
-            start.EnvironmentVariables["OLLAMA_HOST"] = "127.0.0.1:11434";
+            start.EnvironmentVariables["OLLAMA_HOST"] = LocalEndpoint;
             start.EnvironmentVariables["OLLAMA_NO_CLOUD"] = "1";
             try
             {
@@ -150,35 +183,36 @@ namespace LocalCodeLens
             for (int attempt = 0; attempt < 24; attempt++)
             {
                 await Task.Delay(500, cancel);
-                if (await IsReady(cancel))
-                    return;
+                models = await ReadInstalledModels(cancel);
+                if (models != null)
+                    return models;
             }
-            throw new InvalidOperationException("无法连接本机 Ollama。请检查 11434 端口后重试。");
+            throw new InvalidOperationException("无法连接本机 Ollama。请检查 " + LocalEndpoint + " 后重试。");
         }
 
-        private static async Task<bool> IsReady(CancellationToken cancel)
+        private static async Task<InstalledModel[]> ReadInstalledModels(CancellationToken cancel)
         {
             using (var wait = CancellationTokenSource.CreateLinkedTokenSource(cancel))
             {
                 wait.CancelAfter(TimeSpan.FromSeconds(1));
                 try
                 {
-                    using (var response = await Client.GetAsync("api/version", wait.Token))
+                    using (var response = await Client.GetAsync("api/tags", wait.Token))
                     {
                         if (!response.IsSuccessStatusCode)
-                            return false;
-                        var data = new JavaScriptSerializer().Deserialize<Dictionary<string, string>>(
+                            return null;
+                        var data = new JavaScriptSerializer().Deserialize<ModelCatalog>(
                             await response.Content.ReadAsStringAsync());
-                        return data != null && data.ContainsKey("version");
+                        return data == null ? null : data.models;
                     }
                 }
-                catch (HttpRequestException) { return false; }
-                catch (ArgumentException) { return false; }
-                catch (InvalidOperationException) { return false; }
+                catch (HttpRequestException) { return null; }
+                catch (ArgumentException) { return null; }
+                catch (InvalidOperationException) { return null; }
                 catch (OperationCanceledException)
                 {
                     cancel.ThrowIfCancellationRequested();
-                    return false;
+                    return null;
                 }
             }
         }
@@ -187,7 +221,7 @@ namespace LocalCodeLens
         {
             var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             var candidates = new List<string> {
-                @"D:\ollama\ollama.exe", Path.Combine(local, @"Programs\Ollama\ollama.exe")
+                Path.Combine(local, @"Programs\Ollama\ollama.exe")
             };
             foreach (var directory in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';'))
             {
@@ -196,6 +230,20 @@ namespace LocalCodeLens
                     candidates.Add(Path.Combine(entry, "ollama.exe"));
             }
             return candidates.Find(File.Exists);
+        }
+
+        private sealed class ModelCatalog
+        {
+            public InstalledModel[] models { get; set; }
+        }
+
+        private sealed class InstalledModel
+        {
+            public string name { get; set; }
+            public string model { get; set; }
+            public string remote_model { get; set; }
+            public string remote_host { get; set; }
+            internal string Tag { get { return string.IsNullOrEmpty(model) ? name : model; } }
         }
 
         internal sealed class Message
